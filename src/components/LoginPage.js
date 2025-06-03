@@ -1,206 +1,224 @@
-"use client"
+ import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import './LoginPage.css';
+import { Link } from 'react-router-dom';
+import TwoFactorAuth from './TwoFactorAuth';
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi"
-import TwoFactorAuth from "./TwoFactorAuth"
-import "./LoginPage.css"
+const LoginPage = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
-// CORRECTION : Utiliser l'URL correcte du backend
-const API_URL = "https://nfc-application-latest-4.onrender.com"
+  const navigate = useNavigate();
+  const location = useLocation();
 
-const LoginPage = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [show2FA, setShow2FA] = useState(false)
-  const [userEmail, setUserEmail] = useState("")
-  const navigate = useNavigate()
-
-  const onSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setRequiresPasswordReset(false);
+    setResetEmailSent(false);
 
     try {
-      console.log("=== LOGIN DEBUG ===")
-      console.log("API_URL:", API_URL)
-      console.log("Attempting login with:", { email: email.trim(), password: "***" })
-      console.log("Full URL:", `${API_URL}/api/auth/login`)
-
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/login', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          email: email.trim(),
-          password: password,
-        }),
-      })
-
-      console.log("Response status:", response.status)
-      console.log("Response headers:", response.headers)
-
-      const responseText = await response.text()
-      console.log("Raw response:", responseText)
-
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (parseError) {
-        console.error("Failed to parse JSON:", parseError)
-        throw new Error("Réponse serveur invalide")
-      }
-
-      console.log("Parsed response data:", data)
+        body: JSON.stringify({ email, password })
+      });
 
       if (!response.ok) {
-        console.error("Login failed with status:", response.status)
-        throw new Error(data.message || `Erreur ${response.status}`)
+        const errorData = await response.json();
+
+        if (response.status === 401 && errorData.requiresPasswordReset) {
+          setRequiresPasswordReset(true);
+          return;
+        }
+
+        throw new Error(errorData.message || 'Email ou mot de passe incorrect');
       }
 
+      const data = await response.json();
+
       if (data.requires2FA) {
-        setUserEmail(email)
-        setShow2FA(true)
-      } else {
-        localStorage.setItem("token", data.token)
-        localStorage.setItem("userRole", data.role)
-        localStorage.setItem("userName", data.name)
-        navigate("/dashboard")
+        setRequires2FA(true);
+        return;
       }
+
+      // Handle successful login
+      const userInfo = {
+        name: data.name,
+        email: data.email,
+        segment: data.segment
+      };
+
+      localStorage.setItem('authToken', data.token || 'dummy-token');
+      localStorage.setItem('userRole', data.role);
+      if (data.segment) {
+        localStorage.setItem('userSegment', data.segment);
+      }
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+      onLogin(data.role, data.segment, userInfo);
+
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+
     } catch (err) {
-      console.error("=== LOGIN ERROR ===")
-      console.error("Error details:", err)
-      console.error("Error message:", err.message)
-      setError(err.message || "Erreur de connexion au serveur")
+      console.error("Login error:", err);
+      setError(err.message || 'Erreur de connexion au serveur');
     } finally {
-      setLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleVerify2FA = async (email, code) => {
     try {
-      console.log("Verifying 2FA for:", email, "with code:", code)
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
 
-      const response = await fetch(`${API_URL}/api/auth/verify-2fa`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          code: code,
-        }),
-      })
-
-      console.log("2FA response status:", response.status)
-      const data = await response.json()
-      console.log("2FA response data:", data)
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Code invalide")
+        throw new Error(data.message || 'Code de vérification incorrect');
       }
 
-      // Sauvegarde des données utilisateur
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("userRole", data.role)
-      localStorage.setItem("userName", data.name)
-      localStorage.setItem("userEmail", data.email)
+      const userInfo = {
+        name: data.name,
+        email: data.email,
+        segment: data.segment
+      };
+
+      localStorage.setItem('authToken', data.token || 'dummy-token');
+      localStorage.setItem('userRole', data.role);
       if (data.segment) {
-        localStorage.setItem("userSegment", data.segment)
+        localStorage.setItem('userSegment', data.segment);
       }
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
 
-      // Redirection selon le rôle
-      if (data.role === "ADMIN") {
-        navigate("/admin-dashboard")
-      } else if (data.role === "PRODUCER") {
-        navigate("/producer-dashboard")
-      } else {
-        navigate("/dashboard")
-      }
+      onLogin(data.role, data.segment, userInfo);
+
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
     } catch (err) {
-      console.error("2FA verification error:", err)
-      throw err
+      throw err;
     }
-  }
+  };
 
-  const handleBack2FA = () => {
-    setShow2FA(false)
-    setUserEmail("")
-  }
+  const handleSendResetLink = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
 
-  if (show2FA) {
-    return <TwoFactorAuth email={userEmail} onBack={handleBack2FA} onVerify={handleVerify2FA} />
+      if (!response.ok) {
+        throw new Error("Échec de l'envoi du lien de réinitialisation");
+      }
+
+      setResetEmailSent(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (requires2FA) {
+    return (
+      <TwoFactorAuth
+        email={email}
+        onBack={() => setRequires2FA(false)}
+        onVerify={handleVerify2FA}
+      />
+    );
   }
 
   return (
     <div className="login-container">
-      <div className="login-card">
+      <form onSubmit={handleSubmit} className="login-form">
         <h2>Connexion</h2>
-        <p>Connectez-vous à votre compte</p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={onSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <div className="input-container">
-              <FiMail className="input-icon" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Mot de passe</label>
-            <div className="input-container">
-              <FiLock className="input-icon" />
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Votre mot de passe"
-                required
-                disabled={loading}
-              />
+        {requiresPasswordReset && (
+          <div className="password-reset-message">
+            <p>Vous devez définir votre mot de passe avant de pouvoir vous connecter.</p>
+            {resetEmailSent ? (
+<div className="reset-link-message">
+    Un lien de réinitialisation a été envoyé à votre adresse email.
+  </div>            ) : (
               <button
                 type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
+                className="send-reset-link"
+                onClick={handleSendResetLink}
+                disabled={isLoading}
               >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
+                {isLoading ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
               </button>
-            </div>
+            )}
           </div>
+        )}
 
-          <button type="submit" disabled={loading} className="login-button">
-            {loading ? "Connexion..." : "Se connecter"}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <button
-            type="button"
-            className="forgot-password-link"
-            onClick={() => navigate("/forgot-password")}
-            disabled={loading}
-          >
-            Mot de passe oublié ?
-          </button>
+        <div className="form-group">
+          <label htmlFor="email">Email:</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="manelchikha67@gmail.com"
+          />
         </div>
-      </div>
-    </div>
-  )
-}
 
-export default LoginPage
+        <div className="form-group password-group">
+          <label htmlFor="password">Mot de passe:</label>
+          <div className="password-input-container">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              className="toggle-password"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
+          <div className="forgot-password-link">
+            <Link to="/forgot-password">Mot de passe oublié ?</Link>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="login-button"
+          disabled={isLoading || requiresPasswordReset}
+        >
+          {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default LoginPage;
