@@ -1,7 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Routes, Route, Navigate, Link, Outlet, useNavigate, useLocation } from "react-router-dom"
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from "react-router-dom"
 import ResetPasswordPage from "./components/ResetPasswordPage"
 import ForgotPasswordPage from "./components/ForgotPasswordPage"
 
@@ -27,7 +36,8 @@ import {
   fetchSegments,
 } from "./utils/api"
 
-function App() {
+// Composant principal de l'application
+function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [employees, setEmployees] = useState([])
   const [scans, setScans] = useState([])
@@ -236,87 +246,94 @@ function App() {
   }
 
   return (
-    <>
-      <Routes>
-        {/* Routes publiques - SANS authentification */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+    <Routes>
+      {/* Routes publiques - SANS authentification */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      <Route
+        path="/login"
+        element={
+          !isAuthenticated ? (
+            <LoginPage onLogin={handleLogin} />
+          ) : (
+            <Navigate
+              to={
+                userRole === "ADMIN"
+                  ? "/dashboard"
+                  : userRole === "PRODUCER"
+                    ? "/producer"
+                    : userRole === "SEGMENT_LEADER"
+                      ? "/segment-leader"
+                      : "/login"
+              }
+              replace
+            />
+          )
+        }
+      />
+
+      {/* Routes publiques pour la réinitialisation de mot de passe */}
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+      {/* Routes protégées - AVEC authentification */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={userRole === "ADMIN" ? <AdminLayout /> : <Navigate to="/login" replace />}>
+          <Route
+            index
+            element={
+              <PresenceTable
+                employees={filteredEmployees}
+                scans={scans}
+                selectedWeek={selectedWeek}
+                selectedDate={selectedDate}
+                searchTerm={searchTerm}
+                onSearch={setSearchTerm}
+                onViewDetails={handleViewDetails}
+                userInfo={userInfo}
+              />
+            }
+          />
+          <Route
+            path="employees"
+            element={
+              <EmployeeManagement
+                employees={employees}
+                searchTerm={searchTerm}
+                onSearch={setSearchTerm}
+                onAddEmployee={addEmployee}
+                onDeleteEmployee={deleteEmployee}
+                onEmployeesUpdate={setEmployees}
+              />
+            }
+          />
+          <Route path="profiles" element={<ProfileManagement segments={segments} />} />
+        </Route>
 
         <Route
-          path="/login"
+          path="/producer"
           element={
-            !isAuthenticated ? (
-              <LoginPage onLogin={handleLogin} />
+            userRole === "PRODUCER" || userRole === "SEGMENT_LEADER" ? (
+              <ProducerDashboard onLogout={handleLogout} userInfo={userInfo} />
             ) : (
-              <Navigate
-                to={
-                  userRole === "ADMIN"
-                    ? "/dashboard"
-                    : userRole === "PRODUCER"
-                      ? "/producer"
-                      : userRole === "SEGMENT_LEADER"
-                        ? "/segment-leader"
-                        : "/login"
-                }
-                replace
-              />
+              <Navigate to="/login" replace />
             )
           }
         />
+      </Route>
 
-        {/* CORRECTION : Routes publiques pour la réinitialisation de mot de passe */}
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      {/* Route 404 */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  )
+}
 
-        {/* Routes protégées - AVEC authentification */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={userRole === "ADMIN" ? <AdminLayout /> : <Navigate to="/login" replace />}>
-            <Route
-              index
-              element={
-                <PresenceTable
-                  employees={filteredEmployees}
-                  scans={scans}
-                  selectedWeek={selectedWeek}
-                  selectedDate={selectedDate}
-                  searchTerm={searchTerm}
-                  onSearch={setSearchTerm}
-                  onViewDetails={handleViewDetails}
-                  userInfo={userInfo}
-                />
-              }
-            />
-            <Route
-              path="employees"
-              element={
-                <EmployeeManagement
-                  employees={employees}
-                  searchTerm={searchTerm}
-                  onSearch={setSearchTerm}
-                  onAddEmployee={addEmployee}
-                  onDeleteEmployee={deleteEmployee}
-                  onEmployeesUpdate={setEmployees}
-                />
-              }
-            />
-            <Route path="profiles" element={<ProfileManagement segments={segments} />} />
-          </Route>
-
-          <Route
-            path="/producer"
-            element={
-              userRole === "PRODUCER" || userRole === "SEGMENT_LEADER" ? (
-                <ProducerDashboard onLogout={handleLogout} userInfo={userInfo} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-        </Route>
-
-        {/* Route 404 - Optionnel */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </>
+// Composant App principal avec Router
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   )
 }
 
