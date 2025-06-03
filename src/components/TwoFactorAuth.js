@@ -32,7 +32,7 @@ const TwoFactorAuth = ({ email, onBack, onVerify }) => {
 const handleResendCode = async () => {
   setError('');
   try {
-    const response = await fetch('http://localhost:8080/api/auth/resend-2fa', {
+    const response = await fetch('https://bus-management-portal.onrender.com/api/auth/resend-2fa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
