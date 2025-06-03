@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FiLock, FiCheck, FiX, FiEye, FiEyeOff } from 'react-icons/fi';
 import './ResetPasswordPage.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_URL = process.env.REACT_APP_API_URL || 'https://nfc-application-latest-4.onrender.com';
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
