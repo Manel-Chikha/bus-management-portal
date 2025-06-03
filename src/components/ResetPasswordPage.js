@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import { FiCheck, FiX, FiEye, FiEyeOff } from "react-icons/fi"
 import "./ResetPasswordPage.css"
 
+// MODIFIÉ : URL du backend déployé sur Render
 const API_URL = process.env.REACT_APP_API_URL || "https://nfc-application-latest-4.onrender.com"
 
 const ResetPasswordPage = () => {
@@ -20,30 +21,23 @@ const ResetPasswordPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
-    console.log("ResetPasswordPage mounted")
-    console.log("Current URL:", window.location.href)
-    console.log("Token from URL:", token)
-    console.log("Search params:", searchParams.toString())
-
     if (!token) {
-      console.log("No token found, redirecting to login")
-      setError("Token manquant. Veuillez demander un nouveau lien de réinitialisation.")
-      setTimeout(() => navigate("/login"), 3000)
+      navigate("/login")
     }
-  }, [token, navigate, searchParams])
+  }, [token, navigate])
 
   const validatePassword = () => {
     if (password.length < 8) {
-      return "Le mot de passe doit contenir au moins 8 caractères"
+      return "Password must be at least 8 characters"
     }
     if (!/[A-Z]/.test(password)) {
-      return "Le mot de passe doit contenir au moins une majuscule"
+      return "Password must contain at least one uppercase letter"
     }
     if (!/[0-9]/.test(password)) {
-      return "Le mot de passe doit contenir au moins un chiffre"
+      return "Password must contain at least one number"
     }
     if (!/[^A-Za-z0-9]/.test(password)) {
-      return "Le mot de passe doit contenir au moins un caractère spécial"
+      return "Password must contain at least one special character"
     }
     return ""
   }
@@ -52,13 +46,8 @@ const ResetPasswordPage = () => {
     e.preventDefault()
     setError("")
 
-    if (!token) {
-      setError("Token manquant")
-      return
-    }
-
     if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas")
+      setError("Passwords do not match")
       return
     }
 
@@ -70,8 +59,6 @@ const ResetPasswordPage = () => {
 
     try {
       setLoading(true)
-      console.log("Attempting password reset with token:", token)
-
       const response = await fetch(`${API_URL}/api/auth/complete-reset`, {
         method: "POST",
         headers: {
@@ -85,19 +72,17 @@ const ResetPasswordPage = () => {
         }),
       })
 
-      console.log("Reset response status:", response.status)
       const data = await response.json()
-      console.log("Reset response data:", data)
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "Erreur lors de la réinitialisation")
+        throw new Error(data.error || "Failed to reset password")
       }
 
       setSuccess(true)
       setTimeout(() => navigate("/login"), 3000)
     } catch (err) {
       console.error("Reset password error:", err)
-      setError(err.message || "Une erreur s'est produite lors de la réinitialisation")
+      setError(err.message || "An error occurred during password reset")
     } finally {
       setLoading(false)
     }
@@ -138,14 +123,8 @@ const ResetPasswordPage = () => {
                 required
                 minLength="8"
                 placeholder="Minimum 8 caractères"
-                disabled={loading}
               />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
+              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
@@ -167,13 +146,11 @@ const ResetPasswordPage = () => {
                 required
                 minLength="8"
                 placeholder="Retapez votre mot de passe"
-                disabled={loading}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                disabled={loading}
               >
                 {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
               </button>
@@ -193,7 +170,7 @@ const ResetPasswordPage = () => {
             )}
           </div>
 
-          <button type="submit" disabled={loading || !token} className="submit-button">
+          <button type="submit" disabled={loading} className="submit-button">
             {loading ? "En cours..." : "Réinitialiser"}
           </button>
         </form>
