@@ -1,209 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Routes,
-  Route,
-  Navigate,
-  Link,
-  Outlet,
-  useNavigate,
-  useLocation
-} from 'react-router-dom';
-import ResetPasswordPage from './components/ResetPasswordPage';
-import ForgotPasswordPage from './components/ForgotPasswordPage';
+"use client"
 
-import * as XLSX from 'xlsx';
-import { FiMap, FiUserPlus, FiUsers, FiLogOut, FiHome } from 'react-icons/fi';
-import dayjs from 'dayjs';
-import './App.css';
-import StatusBar from './components/StatusBar';
-import GPSModal from './components/GPSModal';
-import WeekSelector from './components/WeekSelector';
-import PresenceTable from './components/PresenceTable';
-import EmployeeManagement from './components/EmployeeManagement';
-import LoginPage from './components/LoginPage';
-import ProducerDashboard from './components/ProducerDashboard';
-import EmployeeDetailsModal from './components/EmployeeDetailsModal';
-import ProfileManagement from './components/ProfileManagement';
+import { useState, useEffect } from "react"
+import { Routes, Route, Navigate, Link, Outlet, useNavigate, useLocation } from "react-router-dom"
+import ResetPasswordPage from "./components/ResetPasswordPage"
+import ForgotPasswordPage from "./components/ForgotPasswordPage"
+
+import * as XLSX from "xlsx"
+import { FiMap, FiUserPlus, FiUsers, FiLogOut, FiHome } from "react-icons/fi"
+import dayjs from "dayjs"
+import "./App.css"
+import StatusBar from "./components/StatusBar"
+import GPSModal from "./components/GPSModal"
+import WeekSelector from "./components/WeekSelector"
+import PresenceTable from "./components/PresenceTable"
+import EmployeeManagement from "./components/EmployeeManagement"
+import LoginPage from "./components/LoginPage"
+import ProducerDashboard from "./components/ProducerDashboard"
+import EmployeeDetailsModal from "./components/EmployeeDetailsModal"
+import ProfileManagement from "./components/ProfileManagement"
 import {
   fetchEmployees,
   fetchEmployeesBySegment,
   fetchScans,
   addEmployee,
   deleteEmployee,
-  fetchSegments
-} from './utils/api';
+  fetchSegments,
+} from "./utils/api"
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [employees, setEmployees] = useState([]);
-  const [scans, setScans] = useState([]);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [apiStatus, setApiStatus] = useState('loading');
-  const [showGpsModal, setShowGpsModal] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(dayjs().format('YYYY-[W]WW'));
-  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userRole, setUserRole] = useState(null);
-  const [userSegment, setUserSegment] = useState(null);
-  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [userInfo, setUserInfo] = useState(null);
-  const [segments, setSegments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [employees, setEmployees] = useState([])
+  const [scans, setScans] = useState([])
+  const [lastUpdated, setLastUpdated] = useState(null)
+  const [apiStatus, setApiStatus] = useState("loading")
+  const [showGpsModal, setShowGpsModal] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState(dayjs().format("YYYY-[W]WW"))
+  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"))
+  const [searchTerm, setSearchTerm] = useState("")
+  const [userRole, setUserRole] = useState(null)
+  const [userSegment, setUserSegment] = useState(null)
+  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
+  const [userInfo, setUserInfo] = useState(null)
+  const [segments, setSegments] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const exportToExcel = () => {
-    const formattedWeek = selectedWeek.replace('W', '-');
-    const dataForExport = employees.map(emp => ({
+    const formattedWeek = selectedWeek.replace("W", "-")
+    const dataForExport = employees.map((emp) => ({
       Matricule: emp.matricule,
       Nom: emp.name,
       Téléphone: emp.tel,
-      Samedi: emp.samedi || 'N/A',
-      Dimanche: emp.dimanche || 'N/A',
-      Lundi: emp.lundi || 'N/A',
-      Mardi: emp.mardi || 'N/A',
-      Mercredi: emp.mercredi || 'N/A',
-      Jeudi: emp.jeudi || 'N/A',
-      Vendredi: emp.vendredi || 'N/A',
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dataForExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Présences');
-    XLSX.writeFile(workbook, `Presences_Semaine_${formattedWeek}.xlsx`);
-  };
+      Samedi: emp.samedi || "N/A",
+      Dimanche: emp.dimanche || "N/A",
+      Lundi: emp.lundi || "N/A",
+      Mardi: emp.mardi || "N/A",
+      Mercredi: emp.mercredi || "N/A",
+      Jeudi: emp.jeudi || "N/A",
+      Vendredi: emp.vendredi || "N/A",
+    }))
+    const worksheet = XLSX.utils.json_to_sheet(dataForExport)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Présences")
+    XLSX.writeFile(workbook, `Presences_Semaine_${formattedWeek}.xlsx`)
+  }
 
   const handleViewDetails = (employee) => {
-    setSelectedEmployee(employee);
-    setShowEmployeeDetails(true);
-  };
+    setSelectedEmployee(employee)
+    setShowEmployeeDetails(true)
+  }
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('authToken');
-      const role = localStorage.getItem('userRole');
-      const segment = localStorage.getItem('userSegment');
-      const userData = localStorage.getItem('userInfo');
+      const token = localStorage.getItem("authToken")
+      const role = localStorage.getItem("userRole")
+      const segment = localStorage.getItem("userSegment")
+      const userData = localStorage.getItem("userInfo")
 
       if (token && role) {
-        setIsAuthenticated(true);
-        setUserRole(role);
-        if (segment) setUserSegment(segment);
-        if (userData) setUserInfo(JSON.parse(userData));
+        setIsAuthenticated(true)
+        setUserRole(role)
+        if (segment) setUserSegment(segment)
+        if (userData) setUserInfo(JSON.parse(userData))
       }
-      setIsLoading(false);
-    };
+      setIsLoading(false)
+    }
 
-    checkAuth();
-  }, []);
+    checkAuth()
+  }, [])
 
-  // Dans App.js, modifiez le useEffect qui charge les données
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) return
 
     const loadData = async () => {
       try {
-        setApiStatus('loading');
-        const segmentsData = await fetchSegments();
-        setSegments(segmentsData);
+        setApiStatus("loading")
+        const segmentsData = await fetchSegments()
+        setSegments(segmentsData)
 
-        let employeesData = [];
-        if (userRole === 'PRODUCER' || userRole === 'SEGMENT_LEADER') {
+        let employeesData = []
+        if (userRole === "PRODUCER" || userRole === "SEGMENT_LEADER") {
           if (userSegment) {
-            employeesData = await fetchEmployeesBySegment(userSegment);
+            employeesData = await fetchEmployeesBySegment(userSegment)
           }
         } else {
-          // Ne rechargez les employés que si nécessaire
           if (employees.length === 0) {
-            employeesData = await fetchEmployees();
+            employeesData = await fetchEmployees()
           } else {
-            employeesData = employees; // Gardez les données existantes
+            employeesData = employees
           }
         }
 
-        const scansData = await fetchScans();
+        const scansData = await fetchScans()
 
-        setEmployees(employeesData || []);
-        setScans(scansData || []);
-        setLastUpdated(new Date());
-        setApiStatus('connected');
+        setEmployees(employeesData || [])
+        setScans(scansData || [])
+        setLastUpdated(new Date())
+        setApiStatus("connected")
       } catch (error) {
-        console.error("Erreur de chargement des données:", error);
-        setApiStatus('error');
+        console.error("Erreur de chargement des données:", error)
+        setApiStatus("error")
       }
-    };
+    }
 
-    loadData();
-    // Augmentez l'intervalle de rafraîchissement ou supprimez-le si non nécessaire
-    const interval = setInterval(loadData, 300000); // 5 minutes au lieu de 30 secondes
-    return () => clearInterval(interval);
-  }, [isAuthenticated, userRole, userSegment]); // Retirez 'employees' des dépendances
+    loadData()
+    const interval = setInterval(loadData, 300000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated, userRole, userSegment])
+
   const handleLogin = (role, segment = null, userData = null) => {
-    setIsAuthenticated(true);
-    setUserRole(role);
-    setUserInfo(userData);
+    setIsAuthenticated(true)
+    setUserRole(role)
+    setUserInfo(userData)
     if (segment) {
-      setUserSegment(segment);
-      localStorage.setItem('userSegment', segment);
+      setUserSegment(segment)
+      localStorage.setItem("userSegment", segment)
     }
-    localStorage.setItem('authToken', 'dummy-token');
-    localStorage.setItem('userRole', role);
+    localStorage.setItem("authToken", "dummy-token")
+    localStorage.setItem("userRole", role)
     if (userData) {
-      localStorage.setItem('userInfo', JSON.stringify(userData));
+      localStorage.setItem("userInfo", JSON.stringify(userData))
     }
 
-    // Redirection basée sur le rôle
-    if (role === 'ADMIN') {
-      navigate('/dashboard');
-    } else if (role === 'PRODUCER' || role === 'SEGMENT_LEADER') {
-      navigate('/producer');
+    if (role === "ADMIN") {
+      navigate("/dashboard")
+    } else if (role === "PRODUCER" || role === "SEGMENT_LEADER") {
+      navigate("/producer")
     }
-  };
+  }
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userSegment');
-    localStorage.removeItem('userInfo');
-    setIsAuthenticated(false);
-    setUserRole(null);
-    setUserSegment(null);
-    setUserInfo(null);
-    navigate('/login');
-  };
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("userSegment")
+    localStorage.removeItem("userInfo")
+    setIsAuthenticated(false)
+    setUserRole(null)
+    setUserSegment(null)
+    setUserInfo(null)
+    navigate("/login")
+  }
 
-  const handleWeekChange = (week) => setSelectedWeek(week);
-  const handleDateChange = (e) => setSelectedDate(e.target.value);
+  const handleWeekChange = (week) => setSelectedWeek(week)
+  const handleDateChange = (e) => setSelectedDate(e.target.value)
 
-  const filteredEmployees = employees.filter(emp =>
-    Object.values(emp).some(
-      val => val && val.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const filteredEmployees = employees.filter((emp) =>
+    Object.values(emp).some((val) => val && val.toString().toLowerCase().includes(searchTerm.toLowerCase())),
+  )
 
   const AdminLayout = () => (
     <div className="app-container">
       {showGpsModal && <GPSModal onClose={() => setShowGpsModal(false)} />}
       {showEmployeeDetails && (
-        <EmployeeDetailsModal
-          employee={selectedEmployee}
-          onClose={() => setShowEmployeeDetails(false)}
-        />
+        <EmployeeDetailsModal employee={selectedEmployee} onClose={() => setShowEmployeeDetails(false)} />
       )}
       <nav className="app-nav">
         <div className="nav-header">
           <h1>Gestion des Présences NFC</h1>
           <div className="date-controls">
-            <WeekSelector
-              selectedWeek={selectedWeek}
-              onChange={handleWeekChange}
-            />
+            <WeekSelector selectedWeek={selectedWeek} onChange={handleWeekChange} />
             <input
               type="date"
               value={selectedDate}
               onChange={handleDateChange}
-              max={dayjs().format('YYYY-MM-DD')}
+              max={dayjs().format("YYYY-MM-DD")}
               className="date-input"
             />
           </div>
@@ -231,97 +214,110 @@ function App() {
           apiStatus={apiStatus}
           lastUpdated={lastUpdated}
           onRefresh={async () => {
-            await fetchEmployees().then(setEmployees);
-            await fetchScans().then(setScans);
-            setLastUpdated(new Date());
+            await fetchEmployees().then(setEmployees)
+            await fetchScans().then(setScans)
+            setLastUpdated(new Date())
           }}
         />
         <Outlet />
       </div>
     </div>
-  );
+  )
 
   const ProtectedRoute = ({ children }) => {
     if (!isAuthenticated) {
-      return <Navigate to="/login" state={{ from: location }} replace />;
+      return <Navigate to="/login" state={{ from: location }} replace />
     }
-    return children ? children : <Outlet />;
-  };
+    return children ? children : <Outlet />
+  }
 
   if (isLoading) {
-    return <div className="loading-screen">Chargement...</div>;
+    return <div className="loading-screen">Chargement...</div>
   }
 
   return (
     <>
       <Routes>
+        {/* Routes publiques - SANS authentification */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={
-          !isAuthenticated ? (
-            <LoginPage onLogin={handleLogin} />
-          ) : (
-            <Navigate to={
-              userRole === 'ADMIN' ? "/dashboard" :
-              userRole === 'PRODUCER' ? "/producer" :
-              userRole === 'SEGMENT_LEADER' ? "/segment-leader" :
-              "/login"
-            } replace />
-          )
-        } />
-<Route path="/reset-password" element={<ResetPasswordPage />} />
-<Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={
-            userRole === 'ADMIN' ? (
-              <AdminLayout />
+        <Route
+          path="/login"
+          element={
+            !isAuthenticated ? (
+              <LoginPage onLogin={handleLogin} />
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate
+                to={
+                  userRole === "ADMIN"
+                    ? "/dashboard"
+                    : userRole === "PRODUCER"
+                      ? "/producer"
+                      : userRole === "SEGMENT_LEADER"
+                        ? "/segment-leader"
+                        : "/login"
+                }
+                replace
+              />
             )
-          }>
-            <Route index element={
-              // Dans la partie où vous utilisez PresenceTable dans App.js
-              <PresenceTable
-                employees={filteredEmployees}
-                scans={scans}
-                selectedWeek={selectedWeek}
-                selectedDate={selectedDate}
-                searchTerm={searchTerm}
-                onSearch={setSearchTerm}
-                onViewDetails={handleViewDetails}
-                userInfo={userInfo}
-              />
-            } />
-            <Route path="employees" element={
-              <EmployeeManagement
-                employees={employees}
-                searchTerm={searchTerm}
-                onSearch={setSearchTerm}
-                onAddEmployee={addEmployee}
-                onDeleteEmployee={deleteEmployee}
-                onEmployeesUpdate={setEmployees}
-              />
-            } />
-            <Route path="profiles" element={
-              <ProfileManagement segments={segments} />
-            } />
-            // Ajoutez cette route dans votre composant App
+          }
+        />
+
+        {/* CORRECTION : Routes publiques pour la réinitialisation de mot de passe */}
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        {/* Routes protégées - AVEC authentification */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={userRole === "ADMIN" ? <AdminLayout /> : <Navigate to="/login" replace />}>
+            <Route
+              index
+              element={
+                <PresenceTable
+                  employees={filteredEmployees}
+                  scans={scans}
+                  selectedWeek={selectedWeek}
+                  selectedDate={selectedDate}
+                  searchTerm={searchTerm}
+                  onSearch={setSearchTerm}
+                  onViewDetails={handleViewDetails}
+                  userInfo={userInfo}
+                />
+              }
+            />
+            <Route
+              path="employees"
+              element={
+                <EmployeeManagement
+                  employees={employees}
+                  searchTerm={searchTerm}
+                  onSearch={setSearchTerm}
+                  onAddEmployee={addEmployee}
+                  onDeleteEmployee={deleteEmployee}
+                  onEmployeesUpdate={setEmployees}
+                />
+              }
+            />
+            <Route path="profiles" element={<ProfileManagement segments={segments} />} />
           </Route>
 
-          <Route path="/producer" element={
-            (userRole === 'PRODUCER' || userRole === 'SEGMENT_LEADER') ? (
-              <ProducerDashboard
-                onLogout={handleLogout}
-                userInfo={userInfo}
-              />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
+          <Route
+            path="/producer"
+            element={
+              userRole === "PRODUCER" || userRole === "SEGMENT_LEADER" ? (
+                <ProducerDashboard onLogout={handleLogout} userInfo={userInfo} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
         </Route>
+
+        {/* Route 404 - Optionnel */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>
-  );
+  )
 }
 
-export default App;
+export default App
