@@ -16,7 +16,7 @@ const ForgotPasswordPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://bus-management-portal.onrender.com/api/auth/reset-password', {
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
