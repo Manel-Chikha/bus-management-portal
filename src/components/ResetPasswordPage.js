@@ -5,8 +5,7 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import { FiCheck, FiX, FiEye, FiEyeOff } from "react-icons/fi"
 import "./ResetPasswordPage.css"
 
-// URL du backend déployé sur Render
-const API_URL = "https://nfc-application-latest-4.onrender.com"
+const API_URL = process.env.REACT_APP_API_URL || "https://nfc-application-latest-4.onrender.com"
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams()
@@ -22,14 +21,16 @@ const ResetPasswordPage = () => {
 
   useEffect(() => {
     console.log("ResetPasswordPage mounted")
+    console.log("Current URL:", window.location.href)
     console.log("Token from URL:", token)
+    console.log("Search params:", searchParams.toString())
 
     if (!token) {
       console.log("No token found, redirecting to login")
       setError("Token manquant. Veuillez demander un nouveau lien de réinitialisation.")
       setTimeout(() => navigate("/login"), 3000)
     }
-  }, [token, navigate])
+  }, [token, navigate, searchParams])
 
   const validatePassword = () => {
     if (password.length < 8) {
