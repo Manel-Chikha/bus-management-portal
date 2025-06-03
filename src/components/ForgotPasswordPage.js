@@ -1,109 +1,99 @@
-"use client"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { FiMail, FiArrowLeft, FiCheck } from "react-icons/fi"
-import "./ForgotPasswordPage.css"
-
-// URL du backend déployé sur Render
-const API_URL = "https://nfc-application-latest-4.onrender.com"
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiMail, FiArrowLeft } from 'react-icons/fi';
+import './ForgotPasswordPage.css';
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const onSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
-      console.log("Requesting password reset for:", email)
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
 
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-        }),
-      })
-
-      console.log("Reset password response status:", response.status)
-      const data = await response.json()
-      console.log("Reset password response data:", data)
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "Erreur lors de la demande")
+        throw new Error(data.message || 'Failed to send reset email');
       }
 
-      setSuccess(true)
+      setSuccess(true);
     } catch (err) {
-      console.error("Password reset error:", err)
-      setError(err.message || "Erreur lors de la demande de réinitialisation")
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (success) {
     return (
       <div className="forgot-password-container">
-        <div className="forgot-password-card">
-          <div className="success-message">
-            <FiCheck className="success-icon" />
-            <h2>Email envoyé !</h2>
-            <p>
-              Si votre adresse email est enregistrée, vous recevrez un lien de réinitialisation dans quelques minutes.
-            </p>
-            <button className="back-to-login-button" onClick={() => navigate("/login")}>
-              Retour à la connexion
-            </button>
-          </div>
+        <div className="success-message">
+          <h2>Email envoyé!</h2>
+          <p>Un lien de réinitialisation a été envoyé à votre adresse email.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="back-to-login"
+          >
+            Retour à la connexion
+          </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="forgot-password-container">
       <div className="forgot-password-card">
-        <button className="back-button" onClick={() => navigate("/login")}>
+        <button
+          className="back-button"
+          onClick={() => navigate('/login')}
+        >
           <FiArrowLeft /> Retour
         </button>
 
-        <h2>Mot de passe oublié</h2>
-        <p>Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+        <h2>Réinitialisation du mot de passe</h2>
+        <p>Entrez votre email pour recevoir un lien de réinitialisation</p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={onSubmit}>
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Adresse email</label>
-            <div className="input-container">
+            <label>Email</label>
+            <div className="input-with-icon">
               <FiMail className="input-icon" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.com"
                 required
-                disabled={loading}
+                placeholder="Votre adresse email"
               />
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="reset-button">
-            {loading ? "Envoi en cours..." : "Envoyer le lien"}
+          <button
+            type="submit"
+            disabled={loading}
+            className="submit-button"
+          >
+            {loading ? 'Envoi en cours...' : 'Envoyer le lien'}
           </button>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ForgotPasswordPage
+export default ForgotPasswordPage;
