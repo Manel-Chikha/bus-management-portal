@@ -26,7 +26,7 @@ const LoginPage = ({ onLogin }) => {
     setResetEmailSent(false);
 
     try {
-      const response = await fetch('https://bus-management-portal.onrender.com/api/auth/login', {
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const LoginPage = ({ onLogin }) => {
 
   const handleVerify2FA = async (email, code) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/verify-2fa', {
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/verify-2fa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code })
@@ -119,7 +119,7 @@ const LoginPage = ({ onLogin }) => {
   const handleSendResetLink = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:8080/api/auth/reset-password', {
+      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
