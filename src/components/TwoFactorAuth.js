@@ -4,7 +4,6 @@ import { useState } from "react"
 import { FiArrowLeft, FiCheck } from "react-icons/fi"
 import "./TwoFactorAuth.css"
 
-// MODIFIÉ : URL du backend déployé sur Render
 const API_URL = process.env.REACT_APP_API_URL || "https://nfc-application-latest-4.onrender.com"
 
 const TwoFactorAuth = ({ email, onBack, onVerify }) => {
