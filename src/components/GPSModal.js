@@ -29,7 +29,7 @@ const GPSModal = ({ onClose }) => {
 
   // Détermine l'URL de l'API en fonction de l'environnement
   const API_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:9090/api/gps/bus-details'
+    ? 'https://gps-application-latest.onrender.com/api/gps/bus-details'
     : 'https://gps-application-latest.onrender.com/api/gps/bus-details';
 
   const fetchBusData = async () => {
