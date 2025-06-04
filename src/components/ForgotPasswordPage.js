@@ -1,40 +1,44 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiMail, FiArrowLeft } from 'react-icons/fi';
-import './ForgotPasswordPage.css';
+"use client"
+
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { FiMail, FiArrowLeft } from "react-icons/fi"
+import "./ForgotPasswordPage.css"
+
+const API_URL = process.env.REACT_APP_API_URL || "https://nfc-application-latest-4.onrender.com"
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [email, setEmail] = useState("")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+    e.preventDefault()
+    setError("")
+    setLoading(true)
 
     try {
-      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to send reset email');
+        throw new Error(data.message || "Failed to send reset email")
       }
 
-      setSuccess(true);
+      setSuccess(true)
     } catch (err) {
-      setError(err.message);
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (success) {
     return (
@@ -42,24 +46,18 @@ const ForgotPasswordPage = () => {
         <div className="success-message">
           <h2>Email envoyé!</h2>
           <p>Un lien de réinitialisation a été envoyé à votre adresse email.</p>
-          <button
-            onClick={() => navigate('/login')}
-            className="back-to-login"
-          >
+          <button onClick={() => navigate("/login")} className="back-to-login">
             Retour à la connexion
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="forgot-password-container">
       <div className="forgot-password-card">
-        <button
-          className="back-button"
-          onClick={() => navigate('/login')}
-        >
+        <button className="back-button" onClick={() => navigate("/login")}>
           <FiArrowLeft /> Retour
         </button>
 
@@ -83,17 +81,13 @@ const ForgotPasswordPage = () => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="submit-button"
-          >
-            {loading ? 'Envoi en cours...' : 'Envoyer le lien'}
+          <button type="submit" disabled={loading} className="submit-button">
+            {loading ? "Envoi en cours..." : "Envoyer le lien"}
           </button>
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ForgotPasswordPage;
+export default ForgotPasswordPage
