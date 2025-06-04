@@ -1,9 +1,11 @@
- import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import './LoginPage.css';
 import { Link } from 'react-router-dom';
 import TwoFactorAuth from './TwoFactorAuth';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://nfc-application-latest-4.onrender.com';
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -26,7 +28,7 @@ const LoginPage = ({ onLogin }) => {
     setResetEmailSent(false);
 
     try {
-      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +84,7 @@ const LoginPage = ({ onLogin }) => {
 
   const handleVerify2FA = async (email, code) => {
     try {
-      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/verify-2fa', {
+      const response = await fetch(`${API_URL}/api/auth/verify-2fa`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code })
@@ -119,7 +121,7 @@ const LoginPage = ({ onLogin }) => {
   const handleSendResetLink = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('https://nfc-application-latest-4.onrender.com/api/auth/reset-password', {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -158,9 +160,10 @@ const LoginPage = ({ onLogin }) => {
           <div className="password-reset-message">
             <p>Vous devez définir votre mot de passe avant de pouvoir vous connecter.</p>
             {resetEmailSent ? (
-<div className="reset-link-message">
-    Un lien de réinitialisation a été envoyé à votre adresse email.
-  </div>            ) : (
+              <div className="reset-link-message">
+                Un lien de réinitialisation a été envoyé à votre adresse email.
+              </div>
+            ) : (
               <button
                 type="button"
                 className="send-reset-link"
