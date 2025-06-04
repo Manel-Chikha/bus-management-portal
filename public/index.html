@@ -8,19 +8,16 @@
     <meta name="description" content="Bus Management Portal" />
     <title>Bus Management Portal</title>
     
-    <!-- Script pour gérer les routes SPA -->
+    <!-- Script pour gérer le routage SPA sur Render -->
     <script type="text/javascript">
-      // Gestion des routes pour SPA sur Render
-      (function(l) {
-        if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + decoded + l.hash
-          );
+      // Gestion des erreurs 404 pour les routes SPA
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect != location.href) {
+          history.replaceState(null, null, redirect);
         }
-      }(window.location))
+      })();
     </script>
   </head>
   <body>
