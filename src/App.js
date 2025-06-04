@@ -237,7 +237,7 @@ function App() {
 
   return (
     <>
-      <Routes>
+      <Routes basename="/bus-management-portal">
         {/* Routes publiques - SANS authentification */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
