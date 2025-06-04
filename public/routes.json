@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "src": "/*",
+      "dest": "/index.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/static/*", "/images/*", "/*.{css,js,ico,jpg,png,svg}"]
+  }
+}
