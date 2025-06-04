@@ -2,20 +2,15 @@ const express = require("express")
 const path = require("path")
 const app = express()
 
-// Serve static files from the React app build directory
+// Serve static files from React build
 app.use(express.static(path.join(__dirname, "build")))
 
-// API routes (if you have any)
-app.get("/api/*", (req, res) => {
-  res.status(404).json({ message: "API route not found" })
-})
-
-// Handle React routing, return all requests to React app
+// Handle React routing - IMPORTANT: This catches ALL routes
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"))
+  res.sendFile(path.join(__dirname, "build/index.html"))
 })
 
-const port = process.env.PORT || 3000
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`)
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`)
 })
