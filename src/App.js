@@ -48,6 +48,8 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  // ... (gardez toutes vos fonctions existantes)
+
   const exportToExcel = () => {
     const formattedWeek = selectedWeek.replace("W", "-")
     const dataForExport = employees.map((emp) => ({
@@ -237,7 +239,8 @@ function App() {
 
   return (
     <>
-      <Routes basename="/bus-management-portal">
+      {/* SUPPRIMÉ: basename="/bus-management-portal" */}
+      <Routes>
         {/* Routes publiques - SANS authentification */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -263,7 +266,6 @@ function App() {
           }
         />
 
-        {/* CORRECTION : Routes publiques pour la réinitialisation de mot de passe */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
@@ -313,7 +315,7 @@ function App() {
           />
         </Route>
 
-        {/* Route 404 - Optionnel */}
+        {/* Route 404 */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>
